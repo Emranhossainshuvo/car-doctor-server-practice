@@ -34,6 +34,14 @@ async function run() {
 
     const bookingCollection = client.db("carRepair").collection("bookings");
 
+    // auth related apis 
+    app.post('/jwt', async(req, res) => {
+      const user = req.body; 
+      console.log(user); 
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+      res.send(token); 
+    })
+
     // services related apis
 
     app.get("/services", async (req, res) => {
