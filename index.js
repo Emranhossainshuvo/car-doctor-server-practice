@@ -2,6 +2,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const cookieParser = require('cookie-parser')
 const app = express();
 const port = process.env.PORT || 5000;
 require("dotenv").config();
@@ -14,6 +15,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(cookieParser());
 
 // console.log(process.env.DB_PASS)
 
@@ -28,6 +30,19 @@ const client = new MongoClient(uri, {
   },
 });
 
+// custom middlewares
+
+const logger = (req, res, next) => {
+  console.log('log: info', req.method, req.url); 
+  next(); 
+}
+
+const verifyToken = (req, res, next) => {
+  const token = req?.cookies?.token; 
+  // console.log('token in the middleware', token);
+  next(); 
+}
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -40,7 +55,7 @@ async function run() {
     const bookingCollection = client.db("carRepair").collection("bookings");
 
     // auth related apis
-    app.post("/jwt", async (req, res) => {
+    app.post("/jwt", logger, async (req, res) => {
       const user = req.body;
       console.log("user for token", user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -81,8 +96,9 @@ async function run() {
 
       // bookings
 
-      app.get("/bookings", async (req, res) => {
+      app.get("/bookings", logger, verifyToken, async (req, res) => {
         console.log(req.query.email);
+        // console.log("cooooooooooooooooooooooooooooooook", req.cookies)
         let query = {};
         if (req.query?.email) {
           query = { email: req.query.email };
