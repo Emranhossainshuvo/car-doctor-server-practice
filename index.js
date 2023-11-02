@@ -1,13 +1,18 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const app = express();
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // console.log(process.env.DB_PASS)
@@ -34,20 +39,28 @@ async function run() {
 
     const bookingCollection = client.db("carRepair").collection("bookings");
 
-    // auth related apis 
-    app.post('/jwt', async(req, res) => {
-      const user = req.body; 
-      console.log(user); 
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
+    // auth related apis
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      console.log("user for token", user);
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "10h",
+      });
 
       res
-      .cookie('token', token, {
-        httpOnly: true, 
-        secure: false, 
-        sameSite: 'none'
-      })
-      .send({success: true}); 
-    })
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+        })
+        .send({ success: true });
+    });
+
+    app.post("/logout", async (req, res) => {
+      const user = req.body;
+      console.log('logging out', user)
+      res.clearCookie("token", { maxAge: 0 }).send({ success: true });
+    });
 
     // services related apis
 
@@ -96,11 +109,11 @@ async function run() {
       console.log(updatedBooking);
       const updateDoc = {
         $set: {
-         status: updatedBooking.status
+          status: updatedBooking.status,
         },
       };
       const result = await bookingCollection.updateOne(filter, updateDoc);
-      res.send(result)
+      res.send(result);
     });
 
     app.delete("/bookings/:id", async (req, res) => {
