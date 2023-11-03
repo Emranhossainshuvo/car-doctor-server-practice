@@ -10,7 +10,10 @@ require("dotenv").config();
 // middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    // origin: ["http://localhost:5173"],
+    origin: [
+      'https://car-repair-practice.firebaseapp.com', 'https://car-repair-practice.web.app'
+    ],
     credentials: true,
   })
 );
@@ -69,7 +72,7 @@ async function run() {
       const user = req.body;
       console.log("user for token", user);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h"
+        expiresIn: "10h"
       });
 
       res
